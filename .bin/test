@@ -9,6 +9,6 @@ fi
 
 ln -s `pwd` node_modules/babel-plugin-react-autoprefix
 
-./node_modules/.bin/babel-node $2 $tests
+./node_modules/babel-cli/bin/babel-node.js $tests
 
 rm node_modules/babel-plugin-react-autoprefix

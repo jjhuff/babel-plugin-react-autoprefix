@@ -48,6 +48,7 @@ test(CODE_STRING, t => {
 CODE.forEach(src => {
   test(src, t => {
     const code = getCode(src);
+    console.log(code);
     t.ok(EXPECT.map(text => code.indexOf(text) !== -1).reduce((p,c) => p && c, true));
     t.end();
   })

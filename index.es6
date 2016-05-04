@@ -36,15 +36,21 @@ function propertiesToObject(t, props) {
     }
 
     // remove property as it'll get added later again later
-    prop.dangerouslyRemove();
+    prop.remove();
   });
 
   return keyedProps;
 }
 
-export default function ({ Plugin, types: t }) {
+export default function ({ types: t }) {
   function getValue(value) {
-    return isString(value) ? t.literal(value) : t.arrayExpression(value.map(t.literal));
+    if (Array.isArray(value)) {
+      return t.arrayExpression(value.map(getValue));
+    } else if(isString(value)) {
+      return t.stringLiteral(value);
+    } else {
+      throw new Error("Unknown type");
+    }
   }
 
   function prefixStyle(path) {
@@ -60,30 +66,22 @@ export default function ({ Plugin, types: t }) {
     // get an object containing all the properties in this that are prefixed
     const prefixed = autoprefix(propertiesToObject(t, path.get('properties')));
 
-    for (var key in prefixed) {
-      // make sure the prefixed value produces valid CSS at all times.
-      const prefixedValue = Array.isArray(prefixed[key]) ? prefixed[key].join(`;${key}:`) : prefixed[key];
-
-      // push new prefixed properties
-      path.pushContainer('properties', t.property(
-        'init',
-        t.literal(key),
-        t.valueToNode(prefixedValue))
+    const props = Object.keys(prefixed).map((key) => {
+      return t.objectProperty(
+        t.identifier(key), getValue(prefixed[key])
       );
-    }
+    });
+
+    path.replaceWith(t.objectExpression(props));
   }
 
-  return new Plugin('react-autoprefix', {
-    metadata: {
-      group: 'builtin-pre'
-    },
-
+  return {
     visitor: {
-      JSXAttribute(node) {
-        if (isStyle(node)) {
-          prefixStyle(this.get('value.expression').resolve(true));
+      JSXAttribute(path) {
+        if (isStyle(path.node)) {
+          prefixStyle(path.get('value.expression').resolve(true));
         }
       }
     }
-  });
+  };
 }

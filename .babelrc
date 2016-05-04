@@ -1,6 +1,5 @@
 {
-  "stage": 0,
-  "optional": [
-    "regenerator"
-  ]
+  "presets": [
+    "es2015",
+  ],
 }
